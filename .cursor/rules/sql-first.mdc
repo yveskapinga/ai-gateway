@@ -1,0 +1,12 @@
+---
+description: SQL-first — routines nommées, pas de SQL inline, Domain sans persistence vendor
+alwaysApply: true
+---
+
+# SQL-first (AIGW ADR-001)
+
+- Tables et routines dans `control-plane/sql/`. PHP appelle des routines `aigw_*` via `RoutineExecutor`.
+- Interdit : SQL inline dans controllers, Domain, services Application.
+- Interdit : ORM d’agrégats (Doctrine entities métier).
+- Un `UPDATE` SQL sur `gateway_route` doit pouvoir changer la politique sans toucher au PHP.
+- Avant de merger : `bash scripts/check-sql-first-boundaries.sh`.

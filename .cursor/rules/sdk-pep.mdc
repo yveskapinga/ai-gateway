@@ -1,0 +1,12 @@
+---
+description: SDK PEP mince — demande generate/embed, pas un second moteur
+globs: sdk/**/*.php
+alwaysApply: false
+---
+
+# SDK PEP (AIGW-006)
+
+- Demande `/v1/generate` et `/v1/embed`. N’embarque ni route SQL, ni Ollama, ni clé Gemini.
+- `AIGW_API_KEY` = clé service-to-service du gateway. Pas `GEMINI_API_KEY`.
+- Timeout / 503 → exception. Jamais de texte inventé.
+- Pas de classe `*Engine` dans `sdk/`.

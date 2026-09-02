@@ -1,0 +1,16 @@
+---
+description: Commentaires pédagogiques (contrat, invariant, non-but)
+globs: control-plane/src/**/*.php
+alwaysApply: false
+---
+
+# Commentaires pédagogiques
+
+Chaque type public (classe, interface, routine SQL en tête de fichier) documente :
+
+1. **Pourquoi / contrat** visé (`AIGW-00x`, invariant)
+2. **Garantit**
+3. **Ne fait pas** (non-but)
+4. **Debug** (où regarder)
+
+Ne pas commenter l’évidence ligne à ligne.

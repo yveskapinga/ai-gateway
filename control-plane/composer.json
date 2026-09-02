@@ -1,0 +1,29 @@
+{
+    "name": "aigateway/control-plane",
+    "description": "AI Gateway control plane — SQL-first host around generate/embed",
+    "type": "project",
+    "license": "proprietary",
+    "require": {
+        "php": "^8.3"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^11.5"
+    },
+    "autoload": {
+        "psr-4": {
+            "AiGateway\\Domain\\": "src/Domain/",
+            "AiGateway\\Application\\": "src/Application/",
+            "AiGateway\\Infrastructure\\": "src/Infrastructure/",
+            "AiGateway\\ControlPlane\\": "src/ControlPlane/",
+            "AiGateway\\Sdk\\": "../sdk/php/src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "AiGateway\\Tests\\": "tests/"
+        }
+    },
+    "config": {
+        "sort-packages": true
+    }
+}

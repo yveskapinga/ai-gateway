@@ -1,0 +1,26 @@
+# Secrets — never commit real credentials (AIGW-004)
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/
+
+# PHP
+/control-plane/vendor/
+/control-plane/var/
+/control-plane/.phpunit.cache
+/control-plane/composer.phar
+
+# Node leftovers
+node_modules/
+dist/
+
+*.log
+/tmp/
+/build/

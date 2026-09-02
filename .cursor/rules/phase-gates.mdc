@@ -1,0 +1,16 @@
+---
+description: Enchaîner les phases seulement après gate PASS
+alwaysApply: true
+---
+
+# Gates par phase
+
+```text
+implémenter UNIQUEMENT N → tests @group Pn → sql-first vert
+→ docs/reports/PHASE-PN-GATE.md = PASS → enchaîner N+1
+```
+
+- Interdit : deux phases en parallèle, sauter un gate, brancher une app avant P8.
+- Gate FAIL → STOP, attendre.
+- P7 PASS → STOP vague moteur.
+- Pas d’attribution Cursor dans commits, PR, ou commentaires.

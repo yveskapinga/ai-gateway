@@ -1,0 +1,18 @@
+---
+description: Gestion des erreurs API — JSON métier + correlationId
+globs: control-plane/src/**/*.php
+alwaysApply: false
+---
+
+# Erreurs API (AIGW-005)
+
+Toute erreur HTTP JSON :
+
+```json
+{ "error": { "code": "AIGW.…", "message": "…", "details": null, "correlationId": "…" } }
+```
+
+- Pas de `catch` vide. Pas de page HTML 500 pour `Accept: application/json`.
+- Message utilisateur clair, pas seulement le statusText.
+- Header `X-Correlation-Id` toujours posé.
+- Fail-secure : les deux voies d’inférence down → 503 `AIGW.INFERENCE.UNAVAILABLE`, pas de texte inventé.
