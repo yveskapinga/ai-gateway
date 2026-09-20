@@ -19,5 +19,22 @@ services:
       timeout: 5s
       retries: 10
 
+  ollama:
+    image: ollama/ollama:latest
+    container_name: aigateway-ollama
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:11434:11434"
+    volumes:
+      - aigateway_ollama:/root/.ollama
+    environment:
+      OLLAMA_HOST: 0.0.0.0:11434
+    healthcheck:
+      test: ["CMD-SHELL", "ollama list >/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
 volumes:
   aigateway_pg_data:
+  aigateway_ollama:

@@ -115,4 +115,46 @@ final class FailoverContractTest extends TestCase
         self::assertSame('local after 429', $response->body['text']);
         self::assertSame('failover', $routines->runs[0]['status']);
     }
+
+    public function testPlaceholderStructuredAnswerFailsOverToGemini(): void
+    {
+        $schema = [
+            'type' => 'object',
+            'required' => ['answer', 'sourceIds', 'insufficientEvidence'],
+        ];
+        $ollama = new OllamaGenerativeClient(new FakeJsonHttpClient(static function (): array {
+            return [
+                'status' => 200,
+                'body' => ['response' => '{"answer":"nous n\'avons pas reçu d\'answer","sourceIds":[],"insufficientEvidence":true}'],
+                'error' => null,
+            ];
+        }));
+        $gemini = new GeminiGenerativeClient(new FakeJsonHttpClient(static function (): array {
+            return [
+                'status' => 200,
+                'body' => ['candidates' => [['content' => ['parts' => [['text' => '{"answer":"Kapinga Kadima Luse Naomi","sourceIds":["s1"],"insufficientEvidence":false}']]]]]],
+                'error' => null,
+            ];
+        }), 'test-key');
+
+        [$front, $routines] = ControlPlaneFactory::inMemoryGenerateFrontController(
+            new MapGenerativeClientLocator(['ollama' => $ollama, 'gemini' => $gemini]),
+            true,
+        );
+
+        $response = $front->handle('POST', '/v1/generate', [
+            'X-API-Key' => 'dev_only_change_me',
+        ], [
+            'application' => 'APP_DEMO',
+            'task' => 'generate',
+            'complexity' => 'low',
+            'prompt' => 'x',
+            'jsonSchema' => $schema,
+        ]);
+
+        self::assertSame(200, $response->httpStatus);
+        self::assertSame('gemini', $response->body['provider']);
+        self::assertSame('Kapinga Kadima Luse Naomi', $response->body['json']['answer']);
+        self::assertSame('failover', $routines->runs[0]['status']);
+    }
 }

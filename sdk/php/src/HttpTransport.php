@@ -20,7 +20,7 @@ final class HttpTransport implements GatewayTransport
      */
     public function __construct(
         private readonly string $baseUrl,
-        private readonly int $timeoutMs = 30000,
+        private readonly int $timeoutMs = 150000,
         private readonly array $headers = [],
     ) {
     }

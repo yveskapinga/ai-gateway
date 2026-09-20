@@ -23,6 +23,8 @@ final class GenerateContractTest extends TestCase
             self::assertStringContainsString('/api/generate', $url);
             self::assertSame('llama3.2:3b', $payload['model']);
             self::assertFalse($payload['stream']);
+            self::assertSame(8192, $payload['options']['num_ctx']);
+            self::assertSame(80.0, $timeout);
 
             return ['status' => 200, 'body' => ['response' => 'bonjour depuis local'], 'error' => null];
         });
@@ -48,6 +50,42 @@ final class GenerateContractTest extends TestCase
         self::assertSame('ok', $routines->runs[0]['status']);
         self::assertSame('ollama', $routines->runs[0]['provider_code']);
         self::assertArrayNotHasKey('prompt', $routines->runs[0]);
+    }
+
+    public function testStructuredJsonMissingAnswerDoesNotCountAsSuccess(): void
+    {
+        $http = new FakeJsonHttpClient(static function (string $url, array $headers, array $payload, float $timeout): array {
+            self::assertSame('json', $payload['format']);
+            self::assertSame(8192, $payload['options']['num_ctx']);
+            self::assertSame(80.0, $timeout);
+
+            return [
+                'status' => 200,
+                'body' => ['response' => '{"sourceIds":[],"insufficientEvidence":true}'],
+                'error' => null,
+            ];
+        });
+        [$front] = ControlPlaneFactory::inMemoryGenerateFrontController(
+            new MapGenerativeClientLocator(['ollama' => new OllamaGenerativeClient($http)]),
+            false,
+        );
+
+        $response = $front->handle('POST', '/v1/generate', [
+            'X-API-Key' => 'dev_only_change_me',
+        ], [
+            'application' => 'APP_DEMO',
+            'task' => 'generate',
+            'complexity' => 'low',
+            'prompt' => 'x',
+            'jsonSchema' => [
+                'type' => 'object',
+                'required' => ['answer', 'sourceIds', 'insufficientEvidence'],
+            ],
+        ]);
+
+        self::assertSame(503, $response->httpStatus);
+        self::assertSame('AIGW.INFERENCE.UNAVAILABLE', $response->body['error']['code']);
+        self::assertArrayNotHasKey('text', $response->body);
     }
 
     public function testTimeoutDoesNotInventText(): void

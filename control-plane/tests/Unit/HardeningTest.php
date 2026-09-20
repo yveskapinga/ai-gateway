@@ -75,8 +75,8 @@ final class HardeningTest extends TestCase
     public function testComposeDoesNotPublishOllama(): void
     {
         $compose = (string) file_get_contents(dirname(__DIR__, 3) . '/deployments/compose/docker-compose.yml');
-        self::assertStringNotContainsString('11434', $compose);
-        self::assertStringNotContainsString('ollama', strtolower($compose));
+        self::assertStringContainsString('127.0.0.1:11434:11434', $compose);
+        self::assertDoesNotMatchRegularExpression('/- ["\']?(?:0\.0\.0\.0:)?11434:11434/', $compose);
         self::assertStringContainsString('postgres:16', $compose);
     }
 

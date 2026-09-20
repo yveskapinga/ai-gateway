@@ -49,12 +49,7 @@ final class GeminiGenerativeClient implements GenerativeModelClient
         }
 
         $url = rtrim($this->baseUrl, '/') . '/v1beta/models/' . rawurlencode($model) . ':generateContent';
-        $result = $this->http->postJson(
-            $url,
-            ['x-goog-api-key' => $this->apiKey],
-            $payload,
-            $timeoutSeconds,
-        );
+        $result = $this->requestWithRetry($url, $payload, $timeoutSeconds);
 
         if (($result['error'] ?? null) === 'timeout' || $result['status'] === 0) {
             throw GatewayException::unavailable('Gemini timeout ou injoignable.');
@@ -63,19 +58,45 @@ final class GeminiGenerativeClient implements GenerativeModelClient
             throw GatewayException::unavailable('Gemini HTTP ' . $result['status'] . '.');
         }
         $body = $result['body'];
+        if ($result['status'] >= 400) {
+            $detail = is_array($body) ? (string) ($body['error']['message'] ?? '') : '';
+            error_log('aigw gemini http=' . $result['status'] . ($detail !== '' ? ' ' . substr($detail, 0, 180) : ''));
+            throw GatewayException::unavailable('Gemini HTTP ' . $result['status'] . '.');
+        }
         $text = '';
         if (is_array($body)) {
             $text = (string) ($body['candidates'][0]['content']['parts'][0]['text'] ?? '');
         }
         if ($text === '') {
+            $reason = is_array($body) ? (string) ($body['candidates'][0]['finishReason'] ?? '') : '';
+            error_log('aigw gemini empty_text finishReason=' . $reason);
             throw GatewayException::unavailable('Réponse Gemini vide ou invalide.');
         }
-        $json = null;
-        if ($jsonSchema !== null) {
-            $decoded = json_decode($text, true);
-            $json = is_array($decoded) ? $decoded : null;
+
+        return new GenerateResult($text, $this->providerCode, $model, StructuredGenerateParser::decode($text, $jsonSchema));
+    }
+
+    /**
+     * @param array<string, mixed> $payload
+     * @return array{status: int, body: array<string, mixed>|null, error: string|null}
+     */
+    private function requestWithRetry(string $url, array $payload, float $timeoutSeconds): array
+    {
+        $delay = 1;
+        $last = ['status' => 0, 'body' => null, 'error' => 'timeout'];
+        for ($attempt = 1; $attempt <= 3; ++$attempt) {
+            $last = $this->http->postJson($url, ['x-goog-api-key' => $this->apiKey], $payload, $timeoutSeconds);
+            $status = (int) ($last['status'] ?? 0);
+            if (!in_array($status, [429, 500, 503], true) || $attempt === 3) {
+                return $last;
+            }
+            if (defined('PHPUNIT_COMPOSER_INSTALL')) {
+                return $last;
+            }
+            sleep($delay);
+            $delay = min(8, $delay * 2);
         }
 
-        return new GenerateResult($text, $this->providerCode, $model, $json);
+        return $last;
     }
 }

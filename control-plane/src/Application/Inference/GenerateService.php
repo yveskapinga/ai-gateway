@@ -123,7 +123,9 @@ final class GenerateService
         $kind = (string) ($target['kind'] ?? $target['provider_code'] ?? '');
         $model = (string) ($target['code'] ?? '');
         $client = $this->clients->forKind($kind);
+        // Ollama CPU ~50 s pour un prompt RAG 8192 tokens ; Gemini ensuite dans le budget PEP (150 s).
+        $timeout = $kind === 'ollama' ? 80.0 : 60.0;
 
-        return $client->generate($model, $prompt, $jsonSchema, 30.0);
+        return $client->generate($model, $prompt, $jsonSchema, $timeout);
     }
 }
